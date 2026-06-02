@@ -1,0 +1,123 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+.pytest_cache/
+
+# Virtual Environments
+.venv
+venv
+ENV
+env.bak
+venv.bak
+
+# IDE & Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Environment Variables
+.env
+.env.example  # Uncomment if you want to exclude the template
+!.env.example
+
+# Sensitive Data & Personal Information
+data/*
+data_raw/
+raw_data/
+*.csv
+*.xlsx
+*.docx
+
+# Vector Store & Caches
+.vectorstore/
+.chroma/
+.cache/
+*.db
+*.sqlite
+*.sqlite3
+
+# OpenTelemetry & Observability
+observability/dashboards/traces_*.json
+observability/dashboards/*.json
+logs/
+*.log
+
+# Jupyter & Notebooks
+.ipynb_checkpoints
+*.ipynb
+
+# OS
+.DS_Store
+Thumbs.db
+.AppleDouble
+.LSOverride
+
+# Package Manager
+npm-debug.log
+yarn-error.log
+.pnp
+.pnp.js
+
+# Testing
+.coverage
+htmlcov/
+.tox/
+.hypothesis/
+
+# MyPy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pylint
+.pylintrc
+
+# Build directories
+dist/
+build/
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+.*.swp
+
+# Mac
+.AppleDouble
+.LSOverride
+._*
+
+# Memory & Persistence Files
+memory_*.db
+conversation_history_*.json
