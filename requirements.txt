@@ -1,0 +1,43 @@
+# Core Framework
+pydantic-ai==0.8.1
+
+# Configuration
+python-dotenv>=1.0.0
+pydantic-settings>=2.1.0
+
+# Testing
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+
+# CLI
+typer>=0.9.0
+
+# Utilities
+colorama>=0.4.6
+rich>=13.7.0
+
+# OpenTelemetry Stack
+opentelemetry-api==1.21.0
+opentelemetry-sdk==1.21.0
+opentelemetry-exporter-jaeger-thrift==1.21.0
+opentelemetry-instrumentation==0.42b0
+opentelemetry-instrumentation-requests==0.42b0
+
+# Local Vector Store & RAG
+chromadb>=0.4.0
+sentence-transformers>=2.2.0
+
+# Data Processing & Conversion
+pandas>=2.1.0
+openpyxl>=3.10.0
+python-docx>=0.8.0
+
+# Memory & Persistence
+sqlalchemy>=2.0.0
+
+# PII Detection
+transformers>=4.35.0
+torch>=2.1.0
+
+# Testing & Coverage
+pytest-cov>=4.1.0
