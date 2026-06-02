@@ -6,7 +6,8 @@
 | :--- | :--- | :--- | :--- | :--- |
 | **TASK-001** | Definição do Problema e Escopo da Arquitetura | Mapeamento inicial das fontes de dados, desenho dos agentes e estratégia de avaliação. | 2026-06-02 | ✅ Concluído |
 | **TASK-002** | Pipeline de Ingestão e Preparação de Dados Locais | Exportação manual do Google Drive (.docx/.csv) para estrutura local em Markdown (.md). | 2026-06-02 | ✅ Concluído |
-| **TASK-003** | Infraestrutura Base e Observabilidade (OTel) | Setup do repositório, Pydantic AI e OpenTelemetry (OTel) com exportação local. | 2026-06-02 | Planejado |
+| **TASK-003** | Infraestrutura Base e Observabilidade (OTel) | Setup do repositório, Pydantic AI e OpenTelemetry (OTel) com exportação local. | 2026-06-02 | ✅ Concluído |
+| **TASK-003-1** | Observabilidade Avançada e Setup Modular | Implementação de RAG local, memória persistente, guardrails de PII e scripts de conversão. | 2026-06-02 | ✅ Concluído |
 | **TASK-004** | Implementação do RAG Local (Base de Conhecimento) | Configuração de banco vetorial local e mecanismos de busca semântica para as 3 pastas. | 2026-06-02 | Planejado |
 | **TASK-005** | Desenvolvimento do Agente 1: Especialista em Contexto | Agente responsável por rotear, classificar a intenção e buscar dados temporais (Diário). | 2026-06-02 | Planejado |
 | **TASK-006** | Desenvolvimento do Agente 2: Especialista em Síntese e RAG | Agente focado em consolidar manuais, cursos e criar resumos executivos estruturados. | 2026-06-02 | Planejado |
