@@ -8,9 +8,9 @@
 | **TASK-002** | Pipeline de Ingestão e Preparação de Dados Locais | Exportação manual do Google Drive (.docx/.csv) para estrutura local em Markdown (.md). | 2026-06-02 | ✅ Concluído |
 | **TASK-003** | Infraestrutura Base e Observabilidade (OTel) | Setup do repositório, Pydantic AI e OpenTelemetry (OTel) com exportação local. | 2026-06-02 | ✅ Concluído |
 | **TASK-003-1** | Observabilidade Avançada e Setup Modular | Implementação de RAG local, memória persistente, guardrails de PII e scripts de conversão. | 2026-06-02 | ✅ Concluído |
-| **TASK-MEM** | Arquitetura de Memória (Transversal) | Spec transversal que reconcilia os 4 tiers de memória, define fronteira RAG vs Semantic e contratos de API. Pré-requisito de TASK-003-2 em diante. | 2026-06-05 | 🟡 Em Refinamento |
-| **TASK-003-2** | Migração dos Módulos de Memória Existentes | Refatorar `SemanticMemory` (JSON→ChromaDB) e `EpisodicMemory` (ganhar layer vetorial) conforme contratos da SPEC-MEM. | 2026-06-05 | Planejado |
-| **TASK-004** | Implementação do RAG Local (Base de Conhecimento) | Configuração de banco vetorial local e mecanismos de busca semântica para as 3 pastas. | 2026-06-02 | Planejado |
+| **TASK-MEM** | Arquitetura de Memória (Transversal) | Spec transversal que reconcilia os 4 tiers de memória, define fronteira RAG vs Semantic e contratos de API. Pré-requisito de TASK-003-2 em diante. | 2026-06-05 | 📝 Spec Redigida |
+| **TASK-003-2** | Migração dos Módulos de Memória Existentes | Refatorar `SemanticMemory` (JSON→ChromaDB) e `EpisodicMemory` (ganhar layer vetorial) conforme contratos da SPEC-MEM. | 2026-06-05 | 📝 Spec Redigida |
+| **TASK-004** | RAG Local — Integração Completa com os 3 Domínios | Pré-processamento autoritativo (.docx/.csv/.xlsx → .md + frontmatter), chunking adaptativo por domínio, embedding multilingual, re-indexação por hash SHA-256, sanitização de PII na ingestão. | 2026-06-05 | 📝 Spec Redigida |
 | **TASK-005** | Desenvolvimento do Agente 1: Especialista em Contexto | Agente responsável por rotear, classificar a intenção e buscar dados temporais (Diário). | 2026-06-02 | Planejado |
 | **TASK-006** | Desenvolvimento do Agente 2: Especialista em Síntese e RAG | Agente focado em consolidar manuais, cursos e criar resumos executivos estruturados. | 2026-06-02 | Planejado |
 | **TASK-007** | Desenvolvimento do Agente 3: Especialista em Memória e Guardrails | Agente de persistência de preferências que higieniza PII e mantém contexto histórico. | 2026-06-02 | Planejado |
