@@ -31,9 +31,11 @@ sentence-transformers>=2.2.0
 pandas>=2.1.0
 openpyxl>=3.10.0
 python-docx>=0.8.0
+pyyaml>=6.0            # frontmatter YAML (SPEC-004)
+dateparser>=1.2.0     # detecção de janela temporal (SPEC-005)
 
 # Memory & Persistence
-sqlalchemy>=2.0.0
+sqlalchemy>=2.0.0     # SQLite metadata da EpisodicMemory (SPEC-003-2)
 
 # PII Detection
 transformers>=4.35.0

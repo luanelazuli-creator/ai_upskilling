@@ -55,60 +55,64 @@ class PIIGuardrails:
             self.patterns.update(additional_patterns)
     
     @staticmethod
-    def sanitize(text: str, redaction_marker: str = "[REDACTED]") -> str:
+    def sanitize(text: str, label: str = "REDACTED") -> str:
         """
         Remove PII de um texto.
-        
+
+        Produz marcadores no formato canônico `[LABEL_TIPO]`, ex.: `[REDACTED_EMAIL]`.
+        Esse formato é consistente com o mascaramento de contatos da ingestão
+        (SPEC-004 §7).
+
         Args:
             text: Texto a ser sanitizado
-            redaction_marker: Marcador a usar no lugar do PII
-        
+            label: Rótulo dentro dos colchetes (default: "REDACTED")
+
         Returns:
             Texto sanitizado
         """
         sanitized = text
-        
+
         for pii_type, pattern in PIIGuardrails.PATTERNS.items():
             sanitized = re.sub(
                 pattern,
-                f"{redaction_marker}_{pii_type.upper()}",
+                f"[{label}_{pii_type.upper()}]",
                 sanitized,
                 flags=re.IGNORECASE
             )
-        
+
         return sanitized
     
     @staticmethod
     def sanitize_dict(
         data: Dict,
-        redaction_marker: str = "[REDACTED]"
+        label: str = "REDACTED"
     ) -> Dict:
         """
         Sanitizar todas as strings em um dicionário.
-        
+
         Args:
             data: Dicionário com dados
-            redaction_marker: Marcador a usar
-        
+            label: Rótulo dentro dos colchetes (default: "REDACTED")
+
         Returns:
             Dicionário com PII removido
         """
         sanitized = {}
-        
+
         for key, value in data.items():
             if isinstance(value, str):
-                sanitized[key] = PIIGuardrails.sanitize(value, redaction_marker)
+                sanitized[key] = PIIGuardrails.sanitize(value, label)
             elif isinstance(value, dict):
-                sanitized[key] = PIIGuardrails.sanitize_dict(value, redaction_marker)
+                sanitized[key] = PIIGuardrails.sanitize_dict(value, label)
             elif isinstance(value, list):
                 sanitized[key] = [
-                    PIIGuardrails.sanitize(item, redaction_marker) if isinstance(item, str)
+                    PIIGuardrails.sanitize(item, label) if isinstance(item, str)
                     else item
                     for item in value
                 ]
             else:
                 sanitized[key] = value
-        
+
         return sanitized
     
     @staticmethod

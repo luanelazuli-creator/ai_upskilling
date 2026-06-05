@@ -400,15 +400,23 @@ class RAGChunk:
 - [x] Plano de testes esboçado (§10)
 - [ ] Spec revisada e aprovada para implementação
 
-#### Implementação (futura)
-- [ ] Módulos de pré-processamento em `src/rag/preprocessing/`
-- [ ] `scripts/ingest.py` orquestrador com `--force`
-- [ ] Refatoração de `store.py`, `vectorizer.py`, `retriever.py`
-- [ ] Modelo multilingual baixado e funcionando
-- [ ] 3 coleções populadas com os 11 arquivos existentes
-- [ ] Suite de testes da §10 verde
-- [ ] Smoke: query "o que fiz em junho?" retorna chunks do diário
-- [ ] Smoke: query "quem é stakeholder X?" retorna chunks de referências
+#### Implementação (testada com dados fictícios em 2026-06-05)
+- [x] Módulos de pré-processamento em `src/rag/preprocessing/` (loaders, domains, frontmatter)
+- [x] `scripts/ingest.py` orquestrador com `--force` (+ `scripts/query.py` e `scripts/make_fake_data.py`)
+- [x] Refatoração de `store.py` (embedding plugável + hash helpers) e `retriever.py` (multi-collection + filtros)
+- [x] Embedder plugável (`src/rag/embedder.py`): chroma_default / fake / sentence-transformers
+- [x] Chunking adaptativo (`src/rag/chunking.py`): whole_file / standard / row_per_line
+- [x] 3 coleções populadas (diário=2, cursos=5, referências=8 → 15 chunks)
+- [x] Suite de testes `tests/test_spec_004.py` verde (10/10) + suíte 003-1 ajustada (21/21)
+- [x] Smoke: hash skip/force/reindex validados (incl. "arquivo modificado → reindexado")
+- [x] Smoke: PII agressiva (diário) vs mascarar-contatos (stakeholders) validadas no conteúdo indexado
+- [ ] **Pendente:** modelo multilingual real (este teste usou chroma_default/ONNX em inglês)
+- [ ] **Pendente:** emissão de spans OTel na ingestão (§7.2) — hoje há relatório estruturado
+
+> **Achado empírico (2026-06-05):** com o embedder `chroma_default` (ONNX all-MiniLM-L6-v2,
+> treinado em inglês) o recall em PT-BR foi mediano — ex.: a query "próximo passo no
+> certificado de engenharia de dados" rankeou um golden prompt acima do documento correto.
+> Isso **confirma empiricamente** a decisão da §5 de usar um modelo multilingual em produção.
 
 ---
 

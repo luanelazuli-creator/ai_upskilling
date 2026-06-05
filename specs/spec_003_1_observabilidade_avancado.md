@@ -1,11 +1,18 @@
 # Engenharia de Especificação: SPEC-003-1
 ## Observabilidade (OTel) e Setup Avançado
 
-**ID da Atividade:** TASK-003-1  
-**Data de Criação:** 02 de Junho de 2026  
-**Status:** ✅ **IMPLEMENTADO**  
-**Data de Conclusão:** 02 de Junho de 2026  
-**Autor:** Desenvolvedor Capstone  
+**ID da Atividade:** TASK-003-1
+**Data de Criação:** 02 de Junho de 2026
+**Status:** ✅ **IMPLEMENTADO** (com partes superseded — ver nota)
+**Data de Conclusão:** 02 de Junho de 2026
+**Autor:** Desenvolvedor Capstone
+
+> **Nota de superseded (2026-06-05):** a §6 desta spec (módulos `src/memory/semantic.py`
+> e `src/memory/episodic.py`) foi refinada e **substituída** pela [SPEC-003-2](spec_003_2_migracao_memoria.md):
+> `SemanticMemory` migrou de JSON+keyword para ChromaDB vetorial (`user_facts`),
+> `EpisodicMemory` ganhou layer ChromaDB (`episodic_conversations`) com SQLite
+> como metadata. A API antiga (`add_relation`, `search_by_keyword`, `keywords`)
+> foi removida. Toda a §4 (OTel) e §5 (RAG) continuam válidas e em uso.
 
 ---
 

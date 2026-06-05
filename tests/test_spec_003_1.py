@@ -21,8 +21,8 @@ class TestObservabilityModule:
         
         text = "CPF: 123.456.789-10, Email: test@example.com"
         sanitized = PIIGuardrails.sanitize(text)
-        
-        assert "[REDACTED]" in sanitized
+
+        assert "[REDACTED_" in sanitized
         assert "123.456.789-10" not in sanitized
         assert "test@example.com" not in sanitized
     
@@ -80,96 +80,42 @@ class TestRAGModule:
         """Testar inicialização de retriever semântico."""
         from src.rag.retriever import SemanticRetriever
         
-        with tempfile.TemporaryDirectory() as tmpdir:
+        # ignore_cleanup_errors: o ChromaDB mantém chroma.sqlite3 aberto e o
+        # Windows não permite remover o tempdir enquanto isso (WinError 32).
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
+            # SPEC-004 §8: SemanticRetriever é retrieval-only; o chunking vive
+            # na IngestionPipeline. Por isso não há mais `chunker` aqui.
             retriever = SemanticRetriever(db_path=tmpdir)
             assert retriever is not None
             assert retriever.vector_store is not None
-            assert retriever.chunker is not None
 
 
-class TestMemoryModule:
-    """Testes para módulo de memória."""
-    
-    def test_semantic_memory_add_fact(self):
-        """Testar adição de fatos."""
-        from src.memory.semantic import SemanticMemory
-        
-        with tempfile.TemporaryDirectory() as tmpdir:
-            memory = SemanticMemory(storage_path=os.path.join(tmpdir, "mem.json"))
-            
-            memory.add_fact(
-                "fact_1",
-                "Python é versátil",
-                keywords=["python", "programming"],
-                confidence=0.95
-            )
-            
-            fact = memory.get_fact("fact_1")
-            assert fact is not None
-            assert fact["content"] == "Python é versátil"
-    
-    def test_semantic_memory_search(self):
-        """Testar busca de fatos."""
-        from src.memory.semantic import SemanticMemory
-        
-        with tempfile.TemporaryDirectory() as tmpdir:
-            memory = SemanticMemory(storage_path=os.path.join(tmpdir, "mem.json"))
-            
-            memory.add_fact("f1", "IA é o futuro", keywords=["ai", "future"])
-            memory.add_fact("f2", "Machine learning", keywords=["ml", "learning"])
-            
-            results = memory.search_by_keyword("ai")
-            assert len(results) == 1
-            assert results[0]["id"] == "f1"
-    
-    def test_semantic_memory_statistics(self):
-        """Testar estatísticas de memória."""
-        from src.memory.semantic import SemanticMemory
-        
-        with tempfile.TemporaryDirectory() as tmpdir:
-            memory = SemanticMemory(storage_path=os.path.join(tmpdir, "mem.json"))
-            
-            memory.add_fact("f1", "Fato 1", keywords=["key1"])
-            memory.add_fact("f2", "Fato 2", keywords=["key2", "key3"])
-            
-            stats = memory.get_statistics()
-            assert stats["total_facts"] == 2
-            assert stats["total_concepts"] == 3
+# TestMemoryModule (SemanticMemory) foi removido: a API antiga
+# (storage_path, keywords, search_by_keyword, total_concepts) foi substituída
+# pela SPEC-003-2 e a cobertura vive em tests/test_spec_003_2.py.
 
 
 class TestIntegration:
     """Testes de integração end-to-end."""
     
     def test_full_pipeline(self):
-        """Testar pipeline completo de processamento."""
+        """Pipeline mínimo (PII + chunking) sem SemanticMemory.
+
+        Após SPEC-003-2, SemanticMemory exige um VectorStore (ChromaDB),
+        portanto não cabe mais neste teste de smoke. O encaixe completo
+        sanitização -> chunking -> persistência vive em test_spec_003_2.py
+        e test_spec_004.py.
+        """
         from src.memory.guardrails import PIIGuardrails
         from src.rag.vectorizer import DocumentChunker
-        from src.memory.semantic import SemanticMemory
-        
-        # 1. Sanitizar texto
+
         raw_text = "Usuário: João Silva, CPF: 123.456.789-10, Email: joao@example.com"
         sanitized = PIIGuardrails.sanitize(raw_text)
-        assert "[REDACTED]" in sanitized
-        
-        # 2. Chunking
-        chunker = DocumentChunker(chunk_size=200)
+        assert "[REDACTED_" in sanitized
+
+        chunker = DocumentChunker(chunk_size=200, chunk_overlap=50)
         chunks = chunker.chunk_by_size(sanitized)
         assert len(chunks) > 0
-        
-        # 3. Memória semântica
-        with tempfile.TemporaryDirectory() as tmpdir:
-            memory = SemanticMemory(storage_path=os.path.join(tmpdir, "mem.json"))
-            
-            for i, chunk in enumerate(chunks):
-                memory.add_fact(
-                    f"chunk_{i}",
-                    chunk["content"],
-                    keywords=["processed", "sanitized"],
-                    confidence=0.9
-                )
-            
-            results = memory.search_by_keyword("processed")
-            assert len(results) == len(chunks)
     
     def test_modules_independent(self):
         """Testar que módulos funcionam independentemente."""

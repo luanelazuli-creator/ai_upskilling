@@ -1,216 +1,145 @@
-"""
-Vector Store - Gerenciador de índices e busca com ChromaDB
+"""Vector Store — ChromaDB com embedding plugável (SPEC-004 §5/§6).
+
+A coleção é dona da função de embedding; o pipeline só passa documentos/texto.
+Inclui helpers para re-indexação incremental por hash (SPEC-004 §6).
 """
 
-from typing import List, Dict, Optional, Any
+from __future__ import annotations
+
 from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 try:
     import chromadb
-    from chromadb.config import Settings
-except ImportError:
+except ImportError:  # pragma: no cover
     chromadb = None
-
-try:
-    from sentence_transformers import SentenceTransformer
-except ImportError:
-    SentenceTransformer = None
 
 
 class VectorStore:
-    """
-    Vector store local usando ChromaDB e sentence-transformers.
-    
-    Responsável por:
-    - Armazenar e recuperar embeddings
-    - Gerenciar coleções de documentos
-    - Realizar busca semântica
-    """
-    
+    """Vector store local sobre ChromaDB, com embedding function injetável."""
+
     def __init__(
         self,
         db_path: str = "./data/vectorstore",
-        embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"
+        embedding_function: Any = None,
     ):
-        """
-        Inicializar Vector Store.
-        
-        Args:
-            db_path: Caminho para o banco de dados ChromaDB
-            embedding_model: Modelo de embedding a utilizar
-        """
         if chromadb is None:
-            raise ImportError("chromadb não está instalado. Execute: pip install chromadb")
-        if SentenceTransformer is None:
-            raise ImportError("sentence-transformers não está instalado. Execute: pip install sentence-transformers")
-        
+            raise ImportError(
+                "chromadb não está instalado. Execute: pip install chromadb"
+            )
+        if embedding_function is None:
+            from .embedder import get_embedding_function
+
+            embedding_function = get_embedding_function("chroma_default")
+
         Path(db_path).mkdir(parents=True, exist_ok=True)
-        
-        # ChromaDB persistent client
         self.db = chromadb.PersistentClient(path=db_path)
-        
-        # Modelo de embedding
-        self.embedding_model = SentenceTransformer(embedding_model)
-        self.embedding_dim = self.embedding_model.get_sentence_embedding_dimension()
-        
-        # Cache de coleções
+        self.embedding_function = embedding_function
         self.collections: Dict[str, Any] = {}
-    
+
     def get_or_create_collection(self, name: str) -> Any:
-        """
-        Obter ou criar coleção.
-        
-        Args:
-            name: Nome da coleção
-        
-        Returns:
-            Objeto da coleção ChromaDB
-        """
         if name not in self.collections:
             self.collections[name] = self.db.get_or_create_collection(
                 name=name,
-                metadata={"hnsw:space": "cosine"}
+                metadata={"hnsw:space": "cosine"},
+                embedding_function=self.embedding_function,
             )
         return self.collections[name]
-    
-    def index_document(
+
+    # --- escrita -----------------------------------------------------------
+
+    def add_chunks(
         self,
         collection: str,
-        doc_id: str,
-        content: str,
-        metadata: Optional[Dict[str, Any]] = None
+        ids: List[str],
+        documents: List[str],
+        metadatas: List[Dict[str, Any]],
     ) -> None:
-        """
-        Indexar documento com embeddings.
-        
-        Args:
-            collection: Nome da coleção
-            doc_id: ID único do documento
-            content: Conteúdo do documento
-            metadata: Metadados associados ao documento
-        """
-        if metadata is None:
-            metadata = {}
-        
-        # Gerar embedding
-        embedding = self.embedding_model.encode(content).tolist()
-        
-        # Obter coleção e adicionar documento
-        collection_obj = self.get_or_create_collection(collection)
-        collection_obj.add(
-            ids=[doc_id],
-            embeddings=[embedding],
-            documents=[content],
-            metadatas=[metadata]
+        """Adiciona chunks em lote (ChromaDB computa os embeddings)."""
+        if not ids:
+            return
+        col = self.get_or_create_collection(collection)
+        col.add(ids=ids, documents=documents, metadatas=metadatas)
+
+    def delete_by_source(self, collection: str, source_file: str) -> int:
+        """Remove todos os chunks de um arquivo. Retorna quantos havia."""
+        col = self.get_or_create_collection(collection)
+        existing = col.get(where={"source_file": source_file}, include=[])
+        count = len(existing.get("ids", []))
+        if count:
+            col.delete(where={"source_file": source_file})
+        return count
+
+    # --- leitura -----------------------------------------------------------
+
+    def get_existing_hash(
+        self, collection: str, source_file: str
+    ) -> Optional[str]:
+        """Retorna o content_hash já indexado para um arquivo, ou None."""
+        col = self.get_or_create_collection(collection)
+        existing = col.get(
+            where={"source_file": source_file},
+            limit=1,
+            include=["metadatas"],
         )
-    
+        metas = existing.get("metadatas") or []
+        if metas:
+            return metas[0].get("content_hash")
+        return None
+
     def search(
         self,
         collection: str,
         query: str,
-        top_k: int = 5
+        top_k: int = 5,
+        where: Optional[Dict[str, Any]] = None,
     ) -> List[Dict[str, Any]]:
-        """
-        Buscar documentos relevantes.
-        
-        Args:
-            collection: Nome da coleção
-            query: Texto da consulta
-            top_k: Número máximo de resultados
-        
-        Returns:
-            Lista de documentos relevantes com metadata
-        """
-        # Gerar embedding da query
-        query_embedding = self.embedding_model.encode(query).tolist()
-        
-        # Obter coleção e buscar
-        collection_obj = self.get_or_create_collection(collection)
-        results = collection_obj.query(
-            query_embeddings=[query_embedding],
-            n_results=top_k
+        col = self.get_or_create_collection(collection)
+        results = col.query(
+            query_texts=[query],
+            n_results=top_k,
+            where=where or None,
         )
-        
-        return self._format_results(results)
-    
-    def delete_document(self, collection: str, doc_id: str) -> None:
-        """
-        Deletar documento da coleção.
-        
-        Args:
-            collection: Nome da coleção
-            doc_id: ID do documento
-        """
-        collection_obj = self.get_or_create_collection(collection)
-        collection_obj.delete(ids=[doc_id])
-    
+        return self._format_results(results, collection)
+
     def get_collection_stats(self, collection: str) -> Dict[str, Any]:
-        """
-        Obter estatísticas da coleção.
-        
-        Args:
-            collection: Nome da coleção
-        
-        Returns:
-            Dicionário com estatísticas
-        """
-        collection_obj = self.get_or_create_collection(collection)
-        count = collection_obj.count()
-        
-        return {
-            "name": collection,
-            "document_count": count,
-            "embedding_dimension": self.embedding_dim
-        }
-    
+        col = self.get_or_create_collection(collection)
+        return {"name": collection, "document_count": col.count()}
+
     def list_collections(self) -> List[str]:
-        """
-        Listar todas as coleções.
-        
-        Returns:
-            Lista de nomes de coleções
-        """
-        return list(self.db.list_collections())
-    
+        return [c.name for c in self.db.list_collections()]
+
     def delete_collection(self, collection: str) -> None:
-        """
-        Deletar coleção inteira.
-        
-        Args:
-            collection: Nome da coleção
-        """
         self.db.delete_collection(name=collection)
-        if collection in self.collections:
-            del self.collections[collection]
-    
-    def _format_results(self, results: Dict[str, Any]) -> List[Dict[str, Any]]:
-        """
-        Formatar resultados da busca.
-        
-        Args:
-            results: Resultados brutos do ChromaDB
-        
-        Returns:
-            Lista formatada de resultados
-        """
-        formatted = []
-        
-        if not results["ids"] or len(results["ids"]) == 0:
+        self.collections.pop(collection, None)
+
+    # --- helpers -----------------------------------------------------------
+
+    @staticmethod
+    def _format_results(
+        results: Dict[str, Any], collection: str
+    ) -> List[Dict[str, Any]]:
+        formatted: List[Dict[str, Any]] = []
+        ids = results.get("ids") or [[]]
+        if not ids or not ids[0]:
             return formatted
-        
-        # ChromaDB retorna resultados em listas aninhadas
-        ids_list = results["ids"][0]
-        docs_list = results["documents"][0]
-        metadata_list = results["metadatas"][0]
-        distances_list = results.get("distances", [[]])[0]
-        
-        for i, doc_id in enumerate(ids_list):
-            formatted.append({
-                "id": doc_id,
-                "content": docs_list[i] if i < len(docs_list) else "",
-                "metadata": metadata_list[i] if i < len(metadata_list) else {},
-                "distance": distances_list[i] if i < len(distances_list) else None,
-                "relevance_score": 1 - distances_list[i] if i < len(distances_list) else None
-            })
-        
+
+        docs = results.get("documents", [[]])[0]
+        metas = results.get("metadatas", [[]])[0]
+        dists = results.get("distances", [[]])[0]
+
+        for i, doc_id in enumerate(ids[0]):
+            distance = dists[i] if i < len(dists) else None
+            formatted.append(
+                {
+                    "id": doc_id,
+                    "content": docs[i] if i < len(docs) else "",
+                    "collection": collection,
+                    "metadata": metas[i] if i < len(metas) else {},
+                    "distance": distance,
+                    "relevance_score": (
+                        1 - distance if distance is not None else None
+                    ),
+                }
+            )
         return formatted

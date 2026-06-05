@@ -225,14 +225,23 @@ Como Episodic escreve em dois stores, define-se o **invariante**:
 - [x] Política de erro definida (§9)
 - [ ] Spec revisada pela autora e aprovada para implementação
 
-#### Implementação (futura — quando spec for aprovada)
-- [ ] `src/memory/semantic.py` reescrito conforme contrato SPEC-MEM §4.3
-- [ ] `src/memory/episodic.py` refatorado conforme contrato SPEC-MEM §4.2
-- [ ] `src/config.py` e `.env.example` atualizados
-- [ ] `src/memory/__init__.py` exports atualizados
-- [ ] Testes da §8 implementados e passando
-- [ ] Nota de superseded adicionada à SPEC-003-1
-- [ ] Smoke test manual: ciclo add → search → delete em ambos os módulos
+#### Implementação (concluída em 2026-06-05)
+- [x] `src/memory/semantic.py` reescrito conforme contrato SPEC-MEM §4.3 (ChromaDB `user_facts`, sem relations/keywords)
+- [x] `src/memory/episodic.py` refatorado conforme contrato SPEC-MEM §4.2 (ChromaDB + SQLite com atomicidade)
+- [x] `src/config.py` e `.env.example` atualizados (USER_ID, SESSION_ID, EPISODIC_METADATA_DB)
+- [x] `src/memory/__init__.py` exports atualizados
+- [x] `src/utils/session.py` resolve `SESSION_ID` do .env ou gera UUID v4
+- [x] Testes da §8 implementados e passando (`tests/test_spec_003_2.py`, 17 testes)
+- [x] Nota de superseded adicionada à SPEC-003-1
+- [x] Suite completa verde (36 testes, excluindo Ollama)
+
+**Achado de implementação (2026-06-05):** o primeiro draft tinha o filtro
+temporal aplicado no ChromaDB (`timestamp_unix` na metadata). Os testes
+mostraram que isso é frágil — qualquer drift de timestamp entre Chroma e
+SQLite invalida o filtro. A spec §3.2 já dizia "filtros temporais via SQLite";
+ajustei a implementação para fazer **duas consultas** (SQLite p/ janela
+temporal + Chroma p/ semântico) e intersectar em memória. Mais fiel ao
+contrato e mais robusto.
 
 ---
 
