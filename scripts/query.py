@@ -35,7 +35,8 @@ def main() -> int:
     parser.add_argument(
         "--collection",
         choices=["diario", "cursos", "referencias"],
-        default="diario",
+        required=True,
+        help="Coleção onde buscar (obrigatório)",
     )
     parser.add_argument("--top-k", type=int, default=5)
     parser.add_argument(
