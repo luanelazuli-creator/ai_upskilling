@@ -11,7 +11,7 @@
 | **TASK-MEM** | Arquitetura de Memória (Transversal) | Spec transversal que reconcilia os 4 tiers de memória, define fronteira RAG vs Semantic e contratos de API. Pré-requisito de TASK-003-2 em diante. | 2026-06-05 | 📝 Spec Redigida |
 | **TASK-003-2** | Migração dos Módulos de Memória Existentes | Refatorar `SemanticMemory` (JSON→ChromaDB) e `EpisodicMemory` (ganhar layer vetorial) conforme contratos da SPEC-MEM. | 2026-06-05 | 📝 Spec Redigida |
 | **TASK-004** | RAG Local — Integração Completa com os 3 Domínios | Pré-processamento autoritativo (.docx/.csv/.xlsx → .md + frontmatter), chunking adaptativo por domínio, embedding multilingual, re-indexação por hash SHA-256, sanitização de PII na ingestão. | 2026-06-05 | 📝 Spec Redigida |
-| **TASK-005** | Desenvolvimento do Agente 1: Especialista em Contexto | Agente responsável por rotear, classificar a intenção e buscar dados temporais (Diário). | 2026-06-02 | Planejado |
+| **TASK-005** | Agente 1: Triagem e Contexto Temporal | Roteador híbrido (regras + LLM fallback) com detecção de janela temporal via `dateparser`, política de clarificação, schema Pydantic discriminado. | 2026-06-05 | 📝 Spec Redigida |
 | **TASK-006** | Desenvolvimento do Agente 2: Especialista em Síntese e RAG | Agente focado em consolidar manuais, cursos e criar resumos executivos estruturados. | 2026-06-02 | Planejado |
 | **TASK-007** | Desenvolvimento do Agente 3: Especialista em Memória e Guardrails | Agente de persistência de preferências que higieniza PII e mantém contexto histórico. | 2026-06-02 | Planejado |
 | **TASK-008** | Orquestração Multiagente e Interface de Usuário | Integração dos agentes usando padrões de design do Pydantic AI e criação de CLI/Interface simples. | 2026-06-02 | Planejado |
