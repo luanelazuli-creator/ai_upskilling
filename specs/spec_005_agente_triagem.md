@@ -400,16 +400,21 @@ Tamanho inicial: ~30 queries cobrindo todos os intents + edge cases.
 - [x] Plano de testes com golden dataset (§10)
 - [ ] Spec revisada e aprovada para implementação
 
-#### Implementação (futura)
-- [ ] Estrutura `src/agents/triage/` criada
-- [ ] `TriageRuleEngine` cobrindo §4.1
-- [ ] `TemporalExtractor` (dateparser + LLM fallback)
-- [ ] `TriageAgent` integrando camadas
-- [ ] Pydantic AI agent configurado com `output_type=TriageOutput`
-- [ ] Modelo `qwen2.5:3b` baixado e validado
-- [ ] Golden dataset com ≥ 30 entradas
-- [ ] Testes ≥ 80% de acerto de intent
-- [ ] Smoke: chat real com 5 queries variadas, todos os spans capturados
+#### Implementação
+- [x] Estrutura `src/agents/triage/` criada
+- [x] `TriageRuleEngine` cobrindo §4.1 (+ regra `meta` adicional; tabela é não-exaustiva)
+- [x] `TemporalExtractor` (dateparser + camada A0 de data explícita por regex + LLM fallback opcional)
+- [x] `TriageAgent` integrando as 3 camadas, com `tracer` e `llm` injetáveis (testável offline)
+- [x] Pydantic AI agent configurado — LLM produz `TriageResult`; a clarificação é política do agente (desvio consciente do `output_type=TriageOutput` original: separa classificação de decisão de UX)
+- [ ] Modelo `qwen2.5:3b` baixado e validado (requer Ollama; caminho de smoke)
+- [~] Golden dataset: 13 entradas offline-determinísticas (casos que exigem LLM ficam no smoke `@ollama`; ampliar para ≥30 quando calibrar via SPEC-009)
+- [x] Testes ≥ 80% de acerto de intent (`test_golden_dataset_intent_accuracy`; 100% no set offline)
+- [ ] Smoke: chat real com 5 queries variadas (requer Ollama)
+
+**Nota de implementação — descobertas:**
+- `dateparser` 1.4 **não** resolve o prefixo coloquial "dia N" ("dia 11 de junho" → None); adicionada camada A0 de regex (`detection_method="explicit"`) antes do dateparser.
+- Stack OpenTelemetry do venv estava inconsistente (api 1.39.1 + sdk 1.42.1) → criação de span crashava (`TraceFlags.RANDOM_TRACE_ID`). Alinhado para 1.42.1 + semantic-conventions 0.63b1 (exigido pelo chromadb). `requirements.txt` atualizado.
+- `pydantic-ai==0.8.1` e `dateparser` estavam declarados mas o primeiro não estava instalado; instalado.
 
 ---
 

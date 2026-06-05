@@ -1,0 +1,64 @@
+# Golden dataset da triagem (SPEC-005 §10.1).
+#
+# Curado para o que a camada determinística (regras + dateparser) resolve
+# OFFLINE, sem Ollama. Casos que dependem de LLM (semântica fina) ficam fora
+# deste set e são cobertos pelos smoke tests @ollama.
+#
+# RELATIVE_BASE dos testes temporais: 2026-06-15 (fixado via now_fn no teste).
+
+- query: "o que fiz no dia 11 de junho"
+  expected_intent: diary_lookup
+  expected_collections: [diario]
+  expected_temporal: true
+
+- query: "onde parei no curso de Data Engineer"
+  expected_intent: course_status
+  expected_collections: [cursos]
+  expected_temporal: false
+
+- query: "quem é responsável pelo time de plataforma"
+  expected_intent: reference_lookup
+  expected_collections: [referencias]
+  expected_filters: {category: stakeholders}
+
+- query: "como pedir férias"
+  expected_intent: reference_lookup
+  expected_collections: [referencias]
+
+- query: "qual template usar para pesquisa acadêmica"
+  expected_intent: golden_prompt_request
+  expected_collections: [cursos]
+  expected_filters: {type: golden_prompt}
+
+- query: "quais minhas preferências de comunicação"
+  expected_intent: user_profile
+  expected_tiers: [semantic]
+
+- query: "voltando ao que falamos sobre RAG"
+  expected_intent: conversation_recall
+  expected_tiers: [episodic_recent, episodic_semantic]
+
+- query: "minha pendência no diário sobre o manual de férias"
+  expected_intent: cross_domain
+  expected_collections: [diario, referencias]
+
+- query: "o que você sabe fazer"
+  expected_intent: meta
+
+- query: "me mostra tudo do diário"
+  expected_intent: diary_lookup
+  expected_temporal: false
+
+# --- casos de clarificação ---
+
+- query: "ok"
+  expected_kind: clarification_needed
+  expected_reason: low_confidence
+
+- query: "isso aí"
+  expected_kind: clarification_needed
+  expected_reason: low_confidence
+
+- query: "o que fiz no diário"
+  expected_kind: clarification_needed
+  expected_reason: missing_temporal

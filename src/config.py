@@ -22,6 +22,10 @@ class Settings(BaseSettings):
     ollama_triage_model: str = "qwen2.5:3b"
     ollama_triage_temperature: float = 0.1
     ollama_triage_timeout_s: int = 10
+    # Limiares da política híbrida de triagem (SPEC-005 §4)
+    triage_rules_confidence_threshold: float = 0.7  # >= => resolve só com regras
+    triage_clarify_confidence_threshold: float = 0.6  # < => pede clarificação
+    triage_max_clarification_rounds: int = 2
 
     # --- Agente ---
     agent_name: str = "SecondBrain-Basic"
