@@ -27,6 +27,15 @@ class Settings(BaseSettings):
     triage_clarify_confidence_threshold: float = 0.6  # < => pede clarificação
     triage_max_clarification_rounds: int = 2
 
+    # --- Agente 2 (síntese) — SPEC-006 ---
+    ollama_synthesis_model: str = "mistral"
+    ollama_synthesis_temperature: float = 0.3  # mais baixa: favorece ancoragem
+    ollama_synthesis_max_tokens: int = 1024
+    ollama_synthesis_timeout_s: int = 30
+    # Limiar mínimo de relevância máxima do bundle (SPEC-006 §5).
+    # Abaixo disso, devolve NoEvidence(low_relevance) sem chamar o LLM.
+    synthesis_min_relevance_score: float = 0.25
+
     # --- Agente ---
     agent_name: str = "SecondBrain-Basic"
     agent_version: str = "0.1.0"
