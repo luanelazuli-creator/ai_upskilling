@@ -278,19 +278,43 @@ def validate(output: SynthesisOutput, bundle: ContextBundle) -> SynthesisOutput:
 #### 9.1 Esqueleto do agente
 
 ```python
+# src/agents/synthesis/llm_classifier.py
+
+from pydantic_ai import Agent, PromptedOutput
+from src.agents.synthesis.schemas import SynthesisResult
+
+class PydanticAISynthesisLLM:
+    def __init__(self, settings: Settings):
+        self._agent = Agent(
+            _build_model(settings),               # Ollama via endpoint OpenAI-compat (/v1)
+            output_type=PromptedOutput(SynthesisResult),
+            system_prompt=SYNTHESIS_SYSTEM_PROMPT,
+        )
+```
+
+> **Nota de implementação — `PromptedOutput` em vez de tool-calling.**
+> O default do Pydantic AI extrai output estruturado via *tool-calling*. Modelos
+> locais servidos pelo Ollama (ex.: `mistral:7b`) declaram suporte a tools mas
+> emitem a resposta como texto livre, fazendo o agente estourar
+> `UnexpectedModelBehavior: Exceeded maximum retries for output validation`.
+> `PromptedOutput(SynthesisResult)` injeta o JSON schema no prompt e parseia a
+> resposta textual — funciona de forma portável entre modelos locais. A triagem
+> (SPEC-005) mantém tool-calling puro porque roda em `qwen2.5:3b`, que cumpre o
+> contrato de tools de forma confiável. O wrapper LLM vive em
+> `synthesis/llm_classifier.py` (injetável); o núcleo `SynthesisAgent` roda
+> offline sem ele.
+
+O `SynthesisAgent` consome o wrapper acima via o Protocol `SynthesisLLM`:
+
+```python
 # src/agents/agent2_synthesis.py
 
-from pydantic_ai import Agent
 from src.agents.synthesis.schemas import SynthesisOutput, SynthesisResult, NoEvidence
 
 class SynthesisAgent:
-    def __init__(self, settings: Settings):
-        self.settings = settings
-        self.llm_agent = Agent(
-            model=settings.ollama_synthesis_model,
-            output_type=SynthesisOutput,
-            system_prompt=load_system_prompt(),
-        )
+    def __init__(self, llm: Optional[SynthesisLLM] = None, *, settings: Settings = None):
+        self.settings = settings or get_settings()
+        self._llm = llm                            # None → degrada para NoEvidence
 
     async def synthesize(
         self,
@@ -311,9 +335,13 @@ class SynthesisAgent:
                 used_intent=bundle.metadata.get("intent", "unknown"),
             )
 
-        # Chamada ao LLM com bundle serializado
+        # Sem LLM injetado: degrada para NoEvidence em vez de inventar
+        if self._llm is None:
+            return NoEvidence(reason="off_topic", used_intent=...)
+
+        # Chamada ao wrapper LLM com bundle serializado
         prompt = self._render_prompt(query, bundle)
-        result = (await self.llm_agent.run(prompt)).output
+        result = await self._llm.synthesize(prompt)   # Protocol SynthesisLLM
 
         # Validação pós-geração
         return self._validate(result, bundle)
@@ -454,6 +482,7 @@ Testes operam sobre `ContextBundle` mockados — não exigem ChromaDB nem dados 
 | Risco | Probabilidade | Mitigação |
 |---|---|---|
 | Mistral 7B não consegue manter formato de citação `[id]` consistentemente | Média | Validador detecta; SPEC-009 mede e migra para modelo maior se necessário |
+| Modelo local ignora tool-calling e responde texto livre (`Exceeded maximum retries`) | Alta | **Resolvido**: wrapper usa `PromptedOutput` (§9.1) — schema no prompt, sem tools |
 | `MIN_RELEVANCE_SCORE` mal calibrado → NoEvidence em excesso ou alucinação em excesso | Alta | Default conservador (0.25); SPEC-009 calibra com dataset |
 | Bundle grande estoura janela de contexto do modelo | Baixa | Orquestrador trunca antes (responsabilidade da SPEC-008) |
 | Pydantic AI structured output falha com Ollama | Média | Retry interno; fallback NoEvidence; troca de modelo via .env |

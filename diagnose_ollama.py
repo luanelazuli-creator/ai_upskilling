@@ -78,7 +78,10 @@ async def main():
         print(f"    ✗ Ollama não respondeu: {e!r}")
         return
 
-    if settings.ollama_synthesis_model not in models:
+    # Ollama lista nomes com tag (`mistral:latest`); o config usa o nome curto
+    # (`mistral`). Normaliza removendo a tag antes de comparar.
+    installed = {m.split(":", 1)[0] for m in models} | set(models)
+    if settings.ollama_synthesis_model not in installed:
         print(
             f"\n    ⚠ '{settings.ollama_synthesis_model}' NÃO está na lista de modelos.\n"
             f"      Opções:\n"
