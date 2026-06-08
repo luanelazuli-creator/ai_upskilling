@@ -10,7 +10,7 @@ Convenção de modelo (alinhada com SPEC-005 / agent1):
 
 from __future__ import annotations
 
-from pydantic_ai import Agent
+from pydantic_ai import Agent, PromptedOutput
 from pydantic_ai.models.openai import OpenAIModel
 from pydantic_ai.providers.openai import OpenAIProvider
 
@@ -38,7 +38,7 @@ class PydanticAISynthesisLLM:
     def __init__(self, settings: Settings):
         self._agent = Agent(
             _build_model(settings),
-            output_type=SynthesisResult,
+            output_type=PromptedOutput(SynthesisResult),
             system_prompt=SYNTHESIS_SYSTEM_PROMPT,
         )
 
