@@ -66,6 +66,21 @@ class Settings(BaseSettings):
     # --- Retenção (SPEC-MEM §7) ---
     episodic_retention_days: int = 90
 
+    # --- Orquestrador (SPEC-008 §11) ---
+    session_user_id: str = "luane"  # single-user MVP
+    max_context_tokens: int = 4096  # orçamento total do ContextBundle
+    working_memory_capacity: int = 10  # tier 1 (SPEC-MEM §4.1)
+    rag_top_k_per_collection: int = 5
+    episodic_recent_n: int = 3
+    episodic_semantic_top_k: int = 3
+    semantic_top_k: int = 5
+    meta_intent_response: str = (
+        "Sou seu Second Brain. Posso ajudar com seu diário pessoal, "
+        "progresso de cursos e referências (manuais, stakeholders, glossário). "
+        "Faça uma pergunta sobre essas fontes."
+    )
+    orchestrator_turn_timeout_s: int = 60  # ceil global do turno
+
     class Config:
         env_file = ".env"
         case_sensitive = False
